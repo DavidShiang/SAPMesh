@@ -26,32 +26,37 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    # 修正路径问题 - 使用 PowerShell 的正确语法
-    - name: Check local DLLs (CMD)
-      shell: cmd
+    # 检查本地 DLL 文件
+    - name: Check SAP2000v19 DLL
       run: |
-        dir "Sap2000MeshGenerator\SAP2000 model\*SAP2000v19*" /s
+        echo "检查 SAP2000v19 DLL 文件..."
+        if (Test-Path "Sap2000MeshGenerator\SAP2000 model\SAP2000v19.dll") {
+          echo "✓ SAP2000v19.dll 找到"
+        } else {
+          echo "✗ SAP2000v19.dll 未找到"
+          # 列出所有 DLL 文件
+          Get-ChildItem -Path "Sap2000MeshGenerator" -Recurse -Filter "*.dll" | Select-Object Name, Directory
+        }
 
-
-    # 对于 packages.config 项目，使用 nuget restore
-    - name: Restore NuGet packages (packages.config)
+    # 恢复 NuGet 包
+    - name: Restore NuGet packages
       run: nuget restore "Sap2000MeshGenerator/Sap2000MeshGenerator.sln"
 
-    # 使用 MSBuild 编译解决方案
-    - name: Build solution with MSBuild
+    # 构建整个解决方案
+    - name: Build solution
       run: |
         msbuild "Sap2000MeshGenerator/Sap2000MeshGenerator.sln" `
           /p:Configuration=Release `
-          /p:Platform="Any CPU" `
+          /p:Platform="x64" `
           /p:RestorePackages=false `
           /p:CopyLocalLockFileAssemblies=true
 
-    # 发布项目使用 MSBuild
-    - name: Publish executable with MSBuild
+    # 发布主项目 Sap2000MeshGenerator
+    - name: Publish main executable
       run: |
-        msbuild "Sap2000MeshGenerator/Sap2000MeshGenerator.csproj" `
+        msbuild "Sap2000MeshGenerator/Sap2000MeshGenerator/Sap2000MeshGenerator.csproj" `
           /p:Configuration=Release `
-          /p:Platform="Any CPU" `
+          /p:Platform="x64" `
           /p:RuntimeIdentifier=win-x64 `
           /p:SelfContained=true `
           /p:PublishSingleFile=true `
@@ -60,11 +65,25 @@ jobs:
           /p:DebugType=None `
           /p:DebugSymbols=false `
           /t:Publish `
-          /p:PublishDir=./publish/
-      
+          /p:PublishDir=./publish/ `
+          /p:NoWarn=CS0105
+
     # 检查发布结果
     - name: Check published files
-      run: dir ./publish/ /s
+      run: |
+        echo "=== 发布目录内容 ==="
+        if (Test-Path "./publish/") {
+          dir ./publish/ /s
+          echo "=== 可执行文件信息 ==="
+          Get-ChildItem ./publish/*.exe | ForEach-Object { 
+            echo "文件: $($_.Name)"
+            echo "大小: $($_.Length) bytes" 
+          }
+        } else {
+          echo "publish 目录不存在"
+          echo "=== 构建输出目录 ==="
+          dir "Sap2000MeshGenerator/Sap2000MeshGenerator/bin/Release/" /s
+        }
 
     - name: Upload executable artifacts
       uses: actions/upload-artifact@v4
