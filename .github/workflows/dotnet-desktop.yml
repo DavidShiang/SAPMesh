@@ -23,35 +23,36 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    # 恢复NuGet包（使用解决方案）
-    - name: Restore NuGet packages
-      run: dotnet restore Sap2000MeshGenerator/Sap2000MeshGenerator.sln
+    # 添加 MSBuild 支持
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
 
-    # 可选：检查已安装的包
-    - name: List restored packages
-      run: dotnet list Sap2000MeshGenerator/Sap2000MeshGenerator.sln package
+    # 对于 packages.config 项目，使用 nuget restore
+    - name: Restore NuGet packages (packages.config)
+      run: nuget restore Sap2000MeshGenerator/Sap2000MeshGenerator.sln
 
-    # 编译解决方案（不指定RID）
-    - name: Build solution
-      run: dotnet build Sap2000MeshGenerator/Sap2000MeshGenerator.sln --configuration Release --no-restore
+    # 使用 MSBuild 编译解决方案
+    - name: Build solution with MSBuild
+      run: msbuild Sap2000MeshGenerator/Sap2000MeshGenerator.sln /p:Configuration=Release /p:Platform="Any CPU" /p:RestorePackages=false
 
-    # 发布项目（在项目级别指定RID）
-    - name: Publish executable
+    # 发布项目使用 MSBuild
+    - name: Publish executable with MSBuild
       run: |
-        dotnet publish Sap2000MeshGenerator/Sap2000MeshGenerator.csproj `
-          --configuration Release `
-          --runtime win-x64 `
-          --output ./publish/ `
-          --self-contained true `
+        msbuild Sap2000MeshGenerator/Sap2000MeshGenerator.csproj `
+          /p:Configuration=Release `
+          /p:Platform="Any CPU" `
+          /p:RuntimeIdentifier=win-x64 `
+          /p:SelfContained=true `
           /p:PublishSingleFile=true `
           /p:IncludeNativeLibrariesForSelfExtract=true `
           /p:DebugType=None `
           /p:DebugSymbols=false `
-          --no-build
+          /t:Publish `
+          /p:PublishDir=./publish/
       
     - name: Upload executable artifacts
       uses: actions/upload-artifact@v4
       with:
         name: SAPMesh-Executable
         path: ./publish/
-        retention-days: 30      
+        retention-days: 30
