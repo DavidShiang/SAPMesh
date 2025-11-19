@@ -1,0 +1,62 @@
+name: .NET Core Desktop Build and Release
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    strategy:
+      matrix:
+        configuration: [Release]  # 只保留Release配置
+
+    runs-on: windows-latest
+
+    env:
+      Solution_Name: SAPMesh.sln  # 确保指定.sln扩展名
+      Project_Name: SAPMesh       # 添加项目名称
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # Add MSBuild to the PATH
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v2
+
+    # 恢复NuGet包
+    - name: Restore NuGet packages
+      run: dotnet restore $env:Solution_Name
+
+    # 编译项目为可执行文件
+    - name: Build executable
+      run: |
+        dotnet build $env:Solution_Name `
+          --configuration ${{ matrix.configuration }} `
+          --no-restore `
+          --output ./publish/ `
+          -p:Platform="x64" `
+          -p:PublishSingleFile=true `
+          -p:SelfContained=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:RuntimeIdentifier=win-x64
+      
+    # 发布可执行文件
+    - name: Upload executable artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: SAPMesh-Executable
+        path: ./publish/
+        retention-days: 30
