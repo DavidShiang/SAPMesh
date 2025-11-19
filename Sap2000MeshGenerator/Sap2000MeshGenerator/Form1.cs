@@ -10,7 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using FileManager;
 using MathNet.Numerics.LinearAlgebra;
 using MeshGenerator;
 using netDxf;
