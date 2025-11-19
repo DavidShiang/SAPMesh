@@ -17,8 +17,8 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: SAPMesh.sln  # 确保指定.sln扩展名
-      Project_Name: SAPMesh       # 添加项目名称
+      Solution_Name: Sap2000MeshGenerator/Sap2000MeshGenerator.sln  # 确保指定.sln扩展名
+      #Project_Name: SAPMesh       # 添加项目名称
 
     steps:
     - name: Checkout
