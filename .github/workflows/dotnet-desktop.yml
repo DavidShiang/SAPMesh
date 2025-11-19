@@ -23,9 +23,14 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    # 添加 MSBuild 支持
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
+
+    # 检查本地 DLL 文件是否存在
+    - name: Check local DLLs
+      run: |
+        dir "Sap2000MeshGenerator\SAP2000 model\" /s | findstr "SAP2000v19"
+        echo "Local DLL check completed"
 
     # 对于 packages.config 项目，使用 nuget restore
     - name: Restore NuGet packages (packages.config)
@@ -33,7 +38,12 @@ jobs:
 
     # 使用 MSBuild 编译解决方案
     - name: Build solution with MSBuild
-      run: msbuild Sap2000MeshGenerator/Sap2000MeshGenerator.sln /p:Configuration=Release /p:Platform="Any CPU" /p:RestorePackages=false
+      run: |
+        msbuild Sap2000MeshGenerator/Sap2000MeshGenerator.sln `
+          /p:Configuration=Release `
+          /p:Platform="Any CPU" `
+          /p:RestorePackages=false `
+          /p:CopyLocalLockFileAssemblies=true
 
     # 发布项目使用 MSBuild
     - name: Publish executable with MSBuild
@@ -45,11 +55,16 @@ jobs:
           /p:SelfContained=true `
           /p:PublishSingleFile=true `
           /p:IncludeNativeLibrariesForSelfExtract=true `
+          /p:CopyLocalLockFileAssemblies=true `
           /p:DebugType=None `
           /p:DebugSymbols=false `
           /t:Publish `
           /p:PublishDir=./publish/
       
+    # 检查发布结果
+    - name: Check published files
+      run: dir ./publish/ /s
+
     - name: Upload executable artifacts
       uses: actions/upload-artifact@v4
       with:
