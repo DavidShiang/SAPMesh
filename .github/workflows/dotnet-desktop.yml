@@ -27,12 +27,17 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     # 修正路径问题 - 使用 PowerShell 的正确语法
-    - name: Check local DLLs
+    - name: Check local DLLs (CMD)
+      shell: cmd
       run: |
-        Get-ChildItem -Path "Sap2000MeshGenerator" -Recurse -Filter "*SAP2000v19*" | Select-Object FullName
-        # 或者使用 cmd 语法
-        dir "Sap2000MeshGenerator\SAP2000 model\" /s | findstr "SAP2000v19"
+        dir "Sap2000MeshGenerator\SAP2000 model\*SAP2000v19*" /s
 
+    # 手动确保 DLL 在输出目录中
+    - name: Copy local DLLs to output
+      run: |
+        copy "Sap2000MeshGenerator\SAP2000 model\SAP2000v19*.dll" "Sap2000MeshGenerator\bin\Release\" /Y
+        copy "Sap2000MeshGenerator\SAP2000 model\SAP2000v19*.dll" "./publish/" /Y
+        
     # 对于 packages.config 项目，使用 nuget restore
     - name: Restore NuGet packages (packages.config)
       run: nuget restore "Sap2000MeshGenerator/Sap2000MeshGenerator.sln"
