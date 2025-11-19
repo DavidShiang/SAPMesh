@@ -32,13 +32,7 @@ jobs:
       run: |
         dir "Sap2000MeshGenerator\SAP2000 model\*SAP2000v19*" /s
 
-    # 手动确保 DLL 在输出目录中
-    - name: Copy local DLLs to output
-      shell: cmd
-      run: |
-        copy "Sap2000MeshGenerator\SAP2000 model\SAP2000v19*.dll" "Sap2000MeshGenerator\bin\Release\" /Y
-        copy "Sap2000MeshGenerator\SAP2000 model\SAP2000v19*.dll" "./publish/" /Y
-        
+
     # 对于 packages.config 项目，使用 nuget restore
     - name: Restore NuGet packages (packages.config)
       run: nuget restore "Sap2000MeshGenerator/Sap2000MeshGenerator.sln"
